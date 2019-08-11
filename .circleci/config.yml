@@ -1,7 +1,7 @@
 version: 2
 jobs:
   build:
-    working_directory: ~/repo
+    working_directory: ~/code
     docker:
       # Android the primary container
       - image: circleci/android:api-25-alpha
@@ -12,11 +12,12 @@ jobs:
   - run:
           name: Setup emulator
           command: sdkmanager "system-images;android-17;default;armeabi-v7a" && echo "no" | avdmanager create avd -n test -k "system-images;android-17;default;armeabi-v7a"
-      - run:
+  - run:
           name: Launch emulator
-          command: export LD_LIBRARY_PATH=${ANDROID_HOME}/emulator/lib64:${ANDROID_HOME}/emulator/lib64/qt/lib && emulator64-arm -avd test -noaudio -no-boot-anim -no-window -accel auto -verbose
-          background: true
-      - run:
+         - emulator -avd circleci-android22 -no-audio -no-window:
+            background: true
+            parallel: true
+  - run:
           name: Wait emulator
           command: |
             # wait for it to have booted
@@ -25,9 +26,9 @@ jobs:
             sleep 30
             adb shell input keyevent 82
       
-      - run:
+  - run:
           name: Run TestNG Tests
           command: java -cp "lib/*:bin/" org.testng.TestNG testng.xml
           
-      - store_artifacts:
+  - store_artifacts:
           path:  test-output
